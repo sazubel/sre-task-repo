@@ -1,16 +1,24 @@
-alertmanagerFiles:
-  alertmanager.yml: 
+apiVersion: v1
+data:
+  alertmanager.yml: |
     global:
       resolve_timeout: 1m
-
+      slack_api_url: 'https://hooks.slack.com/services/xxxxxxx'
     receivers:
+    - name: 'default-receiver'
+
+    - name: 'slack-notifications'
+      slack_configs:
+      - channel: '#sre-work'
+        send_resolved: true
+
     - name: 'gmail-notifications'
       email_configs:
-      - to: larrazubel@gmail.com 
-        from: myaccout@gmail.com # Update your from mail id here
+      - to: example@gmail.com 
+        from: example@gmail.com # Update your from mail id here
         smarthost: smtp.gmail.com:587
-        auth_username: myaccout@gmail.com # Update your from mail id here
-        auth_identity: myaccout@gmail.com # Update your from mail id here
+        auth_username: example@gmail.com # Update your from mail id here
+        auth_identity: example@gmail.com # Update your from mail id here
         auth_password:  # Update your app-password here
         send_resolved: true
         headers:
@@ -18,17 +26,17 @@ alertmanagerFiles:
         text: "{{ range .Alerts }} Hi, \n{{ .Annotations.summary }}  \n {{ .Annotations.description }} {{end}} "
 
     route:
-      group_wait: 10s
       group_interval: 2m
-      receiver: 'gmail-notifications'
-      repeat_interval: 2m
+      group_wait: 10s
+      receiver: default-receiver
+      repeat_interval: 2h
       routes:
-       - match:
-         severity: page
-        receiver: 'gmail-notifications'
-    
-    templeate:
-     - /etc/alertmanager/*.tmpl
+      - match:
+          severity: warning
+        receiver: slack-notifications
+         
+    templates:
+    - /etc/alertmanager/*.tmpl
 
 kind: ConfigMap
 metadata:
